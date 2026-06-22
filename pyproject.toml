@@ -8,11 +8,11 @@ license-files = ["LICENSE"]
 requires-python = ">=3.14"
 dependencies = [
     "croniter>=6.2.2",
-    "filelock>=3.29.1",
+    "filelock>=3.29.4",
     "langcodes>=3.5.1",
-    "niquests>=3.12",
+    "niquests>=3.19.1",
     "pydantic>=2.11",
-    "pydantic-settings>=2.7",
+    "pydantic-settings>=2.14.2",
     "pyyaml>=6.0.2",
     "rich>=13.9",
 ]
@@ -20,7 +20,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "basedpyright>=1.39.6",
-    "pytest>=8.3",
+    "pytest>=9.1.1",
     "ruff>=0.15.16",
 ]
 
