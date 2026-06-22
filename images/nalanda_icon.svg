@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="55.439mm" height="55.439mm" version="1.1" viewBox="0 0 55.439 55.439" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <linearGradient id="linearGradient4" x1="102.12" x2="130.5" y1="73.874" y2="110.83" gradientTransform="translate(-50.796 79.426)" gradientUnits="userSpaceOnUse">
+   <stop style="stop-color:#aa5cc3" offset="0"/>
+   <stop style="stop-color:#00a4dc" offset="1"/>
+  </linearGradient>
+ </defs>
+ <g transform="translate(-37.792 -144.06)">
+  <path d="m51.323 190.26v-36.959h3.7703l16.966 25.4q0.64492 0.94258 1.4387 2.2076 0.81855 1.265 1.7115 2.6789 0.89297 1.4139 1.7115 2.8029l-0.42168 0.59531q-0.0248-1.3146-0.0744-2.9022-0.0496-1.6123-0.0744-3.1006-0.0248-1.4883-0.0248-2.4309v-25.251h3.3734v36.959h-3.8199l-15.825-23.589q-0.66973-1.017-1.6123-2.4557-0.91777-1.4387-2.0588-3.2246-1.1162-1.8107-2.406-3.8695l0.47129-0.79375q0.0992 2.3316 0.12402 4.2912 0.0496 1.9348 0.0744 3.4478 0.0248 1.5131 0.0248 2.5797v23.614z" style="fill:url(#linearGradient4);stroke-width:.26458"/>
+  <rect x="37.792" y="144.06" width="55.439" height="55.439" style="fill:none"/>
+ </g>
+</svg>

@@ -1,0 +1,11 @@
+.git
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+tests
+.env
+config.yml
+.nalanda-state.json
+*.md
+API_docs

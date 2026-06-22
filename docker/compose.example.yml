@@ -1,0 +1,42 @@
+# Copy this to docker-compose.yml (or merge into your stack) and adjust as noted.
+#
+# First run: with an empty ./config, Nalanda seeds a starter config.yml and .env into it,
+# then comes up idle and healthy. Edit ./config/config.yml (your collections) and
+# ./config/.env (Jellyfin URL + API key, and optional Radarr/Sonarr/MDBList keys), then
+# `docker compose restart`. Any later edit to those files also needs a restart.
+
+services:
+  nalanda:
+    image: nalanda            # or `build: .` while iterating locally
+    container_name: nalanda
+    restart: unless-stopped
+
+    # The image runs as uid:gid 1000 by default. Override here to match the account that owns
+    # ./config (set DOCKER_UID / DOCKER_GID in a .env beside this file, or edit the line).
+    user: "${DOCKER_UID:-1000}:${DOCKER_GID:-1000}"
+
+    # Hardening: the container filesystem is read-only except the one writable scratch space.
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    volumes:
+      # Holds config.yml, .env, and the state file. Must be writable by the uid above:
+      # if you bind-mount a fresh host folder, run `chown 1000:1000 ./config` once (nothing in
+      # the container runs as root to fix ownership for you).
+      - ./config:/config
+
+    ports:
+      - "8842:8842"           # webhook listener; omit if you only run on schedules
+
+    environment:
+      # Set your timezone so the daemon's cron fires on local wall-clock time.
+      TZ: Etc/UTC
+      # Secrets live in ./config/.env (a file Nalanda reads), NOT here -- that keeps them out
+      # of `docker inspect` and the host process environment.
+
+    # The healthcheck is inherited from the image (GET /health).
+
+# Nalanda must be able to reach your Jellyfin / Radarr / Sonarr. If those run in Docker too,
+# put this service on the same network (or use the host's address) and set the URLs in
+# ./config/.env accordingly (e.g. JELLYFIN_URL=http://jellyfin:8096).

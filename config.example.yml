@@ -1,0 +1,374 @@
+# yaml-language-server: $schema=./config.schema.json
+# Nalanda configuration. Copy to `config.yml` and edit; secrets (API keys / URLs) go in `.env`.
+# Full reference: README.md. Regenerate the schema after upgrading: python -m nalanda schema.
+#
+# The collection names, ids, people and titles below are placeholders -- swap in your own.
+
+settings:
+  sync_mode: append        # append | sync (sync also removes items no longer in the list)
+  language: en-US
+  # region: US             # ISO 3166-1; localises chart/discover release dates
+  # hide_year: true        # default true: empty each collection's year + release-date fields
+  # delete_unconfigured_collections: false  # on a full run, delete collections Nalanda made that left the config
+
+  # --- Radarr defaults (optional) ---
+  # Inherited by every collection with `radarr: { enable: true }`. All toggles default false.
+  # radarr:
+  #   add_missing: false       # add collection movies not yet in Radarr
+  #   add_existing: false      # tag movies already in Radarr
+  #   upgrade_existing: false  # reset existing members' quality profile
+  #   monitor_existing: false  # reset existing members' monitored flag
+  #   monitored: true          # monitor newly added movies
+  #   search: false            # search for newly added movies
+  #   minimum_availability: released   # announced | in_cinemas | released
+  #   quality_profile: HD-1080p        # name or id (required when adding/upgrading)
+  #   root_folder: /movies             # required when add_missing
+  #   tag_prefix: "nalanda-"   # identity-tag namespace
+  #   stale_tags: mark         # when a movie leaves a collection: mark | delete | keep
+  #   stale_suffix: "-stale"
+
+  # --- Sonarr defaults (optional; the TV analogue of radarr) ---
+  # sonarr:
+  #   add_missing: false
+  #   add_existing: false
+  #   upgrade_existing: false
+  #   monitor_existing: false  # reconcile existing shows' monitored flag + season monitoring
+  #   monitored: true          # series-level monitored flag for added shows
+  #   monitor: all             # episode strategy: all | future | missing | existing |
+  #                            #   pilot | first_season | latest_season | none
+  #   search: false            # search for missing episodes on add
+  #   cutoff_search: false
+  #   series_type: standard    # standard | daily | anime
+  #   season_folder: true
+  #   quality_profile: HD-1080p
+  #   language_profile: English  # Sonarr v3 only
+  #   root_folder: /tv
+  #   tag_prefix: "nalanda-"
+  #   stale_tags: mark
+  #   stale_suffix: "-stale"
+
+  # --- Webhook daemon (`nalanda serve`) ---
+  # Set WEBHOOK_SECRET in .env to enable. Bind host/port are .env deployment knobs
+  # (NALANDA_HOST / NALANDA_PORT); the state + cache file paths derive from the config dir.
+  # webhook:
+  #   debounce_seconds: 300    # coalesce a burst of triggers into one run
+  #   max_wait_seconds: null   # optional cap on the debounce
+  #   allow_full_run: false    # permit POST /run to trigger a full run
+
+  # --- Metadata cache (TMDB / TVDB / MDBList) ---
+  # On by default. Durations are <int>d / <int>h (or 0/off to bypass a bucket); minutes are
+  # rejected. The cache file derives from the config dir (.nalanda-cache.db) and is disposable;
+  # manage it with `nalanda cache info | prune | clear`.
+  # cache:
+  #   enabled: true
+  #   record_cache_duration: 30d   # per-id details + name/id resolution
+  #   list_cache_duration: 1d      # MDBList / TVDB / TMDB list membership
+  #   query_cache_duration: 3d     # discover / genre / company / keyword / person
+  #   chart_cache_duration: 1d     # popular / trending / time-windowed charts
+
+  # --- Scheduling (`nalanda serve` only) ---
+  # Cron runs resolved most-specific-first: a collection's `run_schedule:` > jobs.<kind> > run_schedule.
+  # Each value is a name from `run_schedules:`, an inline cron, or "none"/"disabled". See README.
+  # run_schedules:           # optional reusable names
+  #   hourly: "0 * * * *"
+  #   daily:  "0 4 * * *"
+  #   weekly: "0 5 * * 1"
+  # run_schedule: daily      # global default (level 1)
+  # jobs:
+  #   collections: daily     # per-job-kind default (level 2)
+  #   metadata: daily
+
+# Order collections in the Jellyfin library view. A collection's `section:` gets an auto
+# sort-title prefixed by the section's position here. See README > Sections.
+sections:
+  - Universes
+  - Studios
+
+# Optional local artwork repository. For each collection Nalanda looks for
+# <path>/collections/<slug>/<primary|thumb|backdrop>.<png|jpg|jpeg|webp>. See README > Artwork.
+# artwork_repo:
+#   path: /artwork
+#   create_empty_folders: false      # make an empty drop-folder per collection
+#   delete_old_empty_folders: false  # on a full run, remove empty folders no longer configured
+
+# Every collection MUST declare `media:` -- movie | tv | mixed.
+#   movie -> Radarr / Jellyfin movie libraries
+#   tv    -> Sonarr / Jellyfin show libraries
+#   mixed -> one BoxSet holding both (see the bottom section)
+collections:
+
+  # --- TMDB collection ---
+  A Movie Franchise:
+    media: movie           # required: movie | tv | mixed
+    tmdb_collection: 1234  # a TMDB collection id
+    overview: Every film in one TMDB collection.
+    section: Universes     # grouped + auto sort-title
+    # order: release_date  # source | sort_name | release_date (smart default if unset)
+    # sort_title: "01"     # custom order within the section
+    # libraries: [Movies]  # restrict matching to these Jellyfin libraries
+    # run_schedule: hourly # per-collection cron (serve only)
+
+  # --- TMDB keyword (Discover query) ---
+  A Shared Universe:
+    media: movie
+    tmdb_keyword: 1234         # id or name
+    tmdb_genre:
+      except: [Documentary]    # exclude the making-of docs that share the keyword
+    section: Universes
+
+  # --- TMDB genre (id or name; case/punctuation-insensitive) ---
+  Westerns:
+    media: movie
+    tmdb_genre: Western
+
+  # Multiple genres default to AND (titles with all of them)...
+  Action-Adventure:
+    media: movie
+    tmdb_genre: [Action, Adventure]     # shorthand list == all (intersection)
+    # tmdb_genre:
+    #   all: [Action, Adventure]        # explicit form
+
+  # ...or use `any:` for OR.
+  Scary or Funny:
+    media: movie
+    tmdb_genre:
+      any: [Horror, Comedy]
+
+  # `limit:` caps a broad query builder, most-popular-first. Default 100; 0 = unlimited.
+  Top 50 Westerns:
+    media: movie
+    tmdb_genre: Western
+    limit: 50
+  All Westerns (uncapped):
+    media: movie
+    tmdb_genre: Western
+    limit: 0
+
+  # `except:` drops titles tagged with these genres. A filter: stands alone or sits alongside
+  # all:/any:. Sources without genre data (e.g. mdblist_list) are never dropped.
+  Animated, but no Comedies:
+    media: movie
+    tmdb_genre:
+      all: [Animation]
+      except: [Comedy]
+
+  # --- People (id or name). actor = acting credits; director/writer/producer = crew by
+  #     department; crew = all crew credits. ---
+  Films by a Director:
+    media: movie
+    tmdb_director: A Director Name   # a person name, or an id
+  Films with an Actor:
+    media: movie
+    tmdb_actor: An Actor Name
+
+  # People (and company) take all/any/except: list or `any` = union; `all` = intersection;
+  # `except` = subtract.
+  Two Actors Together:
+    media: movie
+    tmdb_actor:
+      all: [First Actor, Second Actor]   # only films with both
+  A Director, minus an Actor:
+    media: movie
+    tmdb_director: A Director Name
+    tmdb_actor:
+      except: [Another Actor]
+
+  # `match: all` requires every key (cross-key intersection); default is `any` (union).
+  Sci-Fi with an Actor:
+    media: movie
+    match: all
+    tmdb_genre: Science Fiction
+    tmdb_actor: An Actor Name
+    limit: 300                          # cap the broad genre, then intersect
+
+  # tmdb_keyword/tmdb_list also take all/any/except.
+  Two Keywords at Once:
+    media: movie
+    tmdb_keyword: { all: [1234, 5678] }   # titles tagged with both keyword ids
+
+  # --- Production company (id or name; ambiguous names -> the studio with the most titles) ---
+  From One Studio:
+    media: movie
+    tmdb_company: A Studio Name
+    section: Studios
+
+  # --- Charts (value is the COUNT to take, kept in chart order) ---
+  Popular Now:
+    media: movie
+    tmdb_popular: 30
+  Trending This Week:
+    media: movie
+    tmdb_trending_weekly: 25
+    sync_mode: sync                    # charts change; sync drops ones that fell off
+  # also: tmdb_now_playing, tmdb_top_rated, tmdb_upcoming, tmdb_trending_daily
+
+  # --- Raw Discover (escape hatch): TMDB Discover params pass through; keeps sort_by order ---
+  Best-Rated by Discover:
+    media: movie
+    tmdb_discover:
+      with_genres: 1234              # a TMDB genre id
+      sort_by: vote_average.desc
+      vote_count.gte: 2000
+      limit: 50
+
+  # --- TMDB list (curated order) ---
+  A Curated TMDB List:
+    media: movie
+    tmdb_list: 1234             # a TMDB list id, kept in curated order
+
+  # --- Custom mix: combine collections, movie ids, and titles ---
+  A Custom Mix:
+    media: movie
+    tmdb_collection: 1234            # a whole collection...
+    tmdb_movie: [1234, 5678]         # ...individual movie ids...
+    tmdb_title:                      # ...or titles (no ids needed)
+      - A Film Title
+      - "A Remade Title (1999)"      # "(YYYY)" disambiguates same-named films
+      - 9999                         # numeric titles work unquoted
+    overview: A custom blend.         # merges have no auto metadata -- set it yourself
+    # Per-slot art: *_art_url (remote, Jellyfin downloads) OR *_art_file (local, bytes
+    # uploaded), never both. Overrides the auto-sourced TMDB image and the artwork repo.
+    # primary_art_url:   https://image.tmdb.org/t/p/original/<file>.jpg
+    # thumb_art_url:     https://image.tmdb.org/t/p/original/<file>.jpg
+    # backdrop_art_file: /artwork/extra/a-backdrop.png
+
+  # --- Ordered blocks via `append` (distinct from sync_mode: append) ---
+  # Each block resolves in its natural order, then blocks are concatenated as listed.
+  Ordered Sampler:
+    media: movie
+    tmdb_list: 1234             # block 0: a TMDB list, curated order
+    append:
+      - tmdb_collection: 1234   # block 1: a collection, chronological
+      - tmdb_movie: [1234, 5678]  # block 2: individual movies
+    overview: A curated list, then a collection, then a couple of films.
+
+  # --- MDBList list (curated; sort_by, limit, and url/all/except operators) ---
+  A Weekly Top 10:
+    media: movie
+    mdblist_list:
+      url: https://mdblist.com/lists/someuser/some-list
+      sort_by: rank.asc        # incl. imdbrating/rtomatoes/metacritic/score/...
+      limit: 10
+    sync_mode: sync
+  # operators: {url: [a, b]} unions, {all: [a, b]} intersects, {url: a, except: [b]} subtracts.
+
+  # --- MDBList catalog: discover by cross-source ratings ---
+  Best-Reviewed (Metacritic):
+    media: movie
+    mdblist_catalog:
+      sort: metacritic         # or rtomatoes / imdbrating / letterrating / score / ...
+      score_min: 80            # MDBList aggregate score (0-100)
+      limit: 50
+
+  # --- MDBList official playlist (by slug) ---
+  MDBList Popular:
+    media: movie
+    mdblist_official: popular
+
+  # --- Radarr sync + identity tags ---
+  # `enable: true` opts in (omit/false = inert). Other fields inherit settings.radarr.
+  A Synced Movie List:
+    media: movie
+    mdblist_list: https://mdblist.com/lists/someuser/some-list
+    sync_mode: sync
+    radarr:
+      enable: true               # opt in
+      add_missing: true          # add list movies not yet in Radarr
+      add_existing: true         # tag movies already in Radarr
+      quality_profile: HD-1080p
+      root_folder: /movies
+      monitored: true
+      search: true               # search for newly added movies
+      # tag: my-list             # override the identity-tag slug (-> nalanda-my-list)
+
+  # ============================ TV collections (media: tv) ============================
+  # Build SHOW BoxSets from the Jellyfin TV libraries and (optionally) sync with Sonarr. Movie-only
+  # and TV-only keys are validated per media; shared keys dispatch on `media`.
+
+  # Single shows by TMDB id (the tv analogue of tmdb_movie), plus titles via TV search:
+  Some Favourite Shows:
+    media: tv
+    tmdb_show: [1234, 5678]        # individual TMDB tv ids
+    tmdb_title:
+      - A Show Title
+      - "A Rebooted Show (2015)"
+
+  # TV charts (popular/top_rated/trending dispatch to TV; on_the_air / airing_today are tv-only):
+  Popular Shows:
+    media: tv
+    tmdb_popular: 30
+    sync_mode: sync
+  Airing Now:
+    media: tv
+    tmdb_on_the_air: 20
+
+  # TV network -- the tv analogue of tmdb_company (by id; no name search):
+  Network Shows:
+    media: tv
+    tmdb_network: 1234             # a TMDB network id (id only; no name search)
+    limit: 50
+
+  # TVDB sources (no key needed). tvdb_show / tvdb_list / tvdb_discover are tv here:
+  From TVDB:
+    media: tv
+    tvdb_show: [1234, "A Show Name"]         # id(s), slug(s) or name(s)
+    # tvdb_list: 1234                         # a TVDB list (id or slug), curated order
+    # tvdb_discover: { genre: 1234, sort: score, limit: 50 }   # raw TVDB filter
+
+  # --- Sonarr sync + identity tags (the TV analogue of radarr) ---
+  # Adds `monitor`: which episodes/seasons Sonarr monitors (a TV BoxSet still holds whole shows).
+  A Synced Show List:
+    media: tv
+    mdblist_list: https://mdblist.com/lists/someuser/some-show-list
+    sync_mode: sync
+    sonarr:
+      enable: true
+      add_missing: true
+      add_existing: true
+      quality_profile: HD-1080p
+      root_folder: /tv
+      monitored: true              # series-level monitored flag
+      monitor: all                 # episode strategy (all | future | missing | existing |
+      #                              pilot | first_season | latest_season | none)
+      # monitor_existing: true     # reconcile existing shows' monitored flag + per-season monitoring
+      series_type: standard        # standard | daily | anime
+      search: true                 # search for missing episodes on add
+      # tag: my-shows              # identity-tag slug override (-> nalanda-my-shows)
+
+  # ========================== Mixed collections (media: mixed) ==========================
+  # One BoxSet holding both movies AND shows. Media-specific keys produce their own media;
+  # shared keys produce both. May carry both a radarr: (movies) and a sonarr: (shows) block.
+  A Cross-Media Franchise:
+    media: mixed
+    tmdb_collection: 1234         # the films (movie endpoint)
+    tmdb_show: [1234, 5678]       # the series (tv endpoint)
+    overview: A franchise spanning films and series in one BoxSet.
+    section: Universes
+    # radarr:                      # sync the films via Radarr...
+    #   enable: true
+    #   add_missing: true
+    #   quality_profile: HD-1080p
+    #   root_folder: /movies
+    # sonarr:                      # ...and the series via Sonarr
+    #   enable: true
+    #   add_missing: true
+    #   quality_profile: HD-1080p
+    #   root_folder: /tv
+
+  # A shared key in a mixed collection produces both media; `limit` caps EACH media.
+  Action Everything:
+    media: mixed
+    tmdb_genre: Action
+    limit: 50
+
+# Per-item metadata overrides. Each field is written and locked into Jellyfin so a normal
+# metadata refresh cannot overwrite it. See README > Per-item metadata.
+# metadata:
+#   movies:
+#     - tmdb: 1234
+#       parental_rating: GB-15   # Jellyfin "Parental Rating" (OfficialRating); a bare 15 works too
+#       sort_title: A Film 2     # Jellyfin "Sort Title" (ForcedSortName)
+#   shows:
+#     - tvdb: 5678
+#       parental_rating: GB-12
+#       title: Custom Show Title  # Jellyfin "Title" (Name)

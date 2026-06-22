@@ -1,0 +1,3149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ArtworkRepo": {
+      "additionalProperties": false,
+      "description": "A local artwork repository -- per-collection images dropped on disk.\n\nFor each collection, Nalanda looks for\n``<path>/collections/<slug>/<type>.<ext>`` where ``<type>`` is ``primary`` /\n``thumb`` / ``backdrop``, ``<ext>`` is ``png`` / ``jpg`` / ``jpeg`` / ``webp``,\nand ``<slug>`` is the collection name slugified (the same slug used for identity\ntags: lowercased, runs of non-alphanumerics hyphenated -- so \"A Title:\nSubtitle\" -> \"a-title-subtitle\"). A found file is uploaded and its bytes hashed\nso an unchanged file isn't re-uploaded. A collection's per-slot\n``*_art_url`` / ``*_art_file`` overrides the repo.",
+      "properties": {
+        "path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Filesystem root of the artwork repository. Nalanda reads `<path>/collections/<slug>/<primary|thumb|backdrop>.<png|jpg|jpeg|webp>`.",
+          "title": "Path"
+        },
+        "create_empty_folders": {
+          "default": false,
+          "description": "Create an empty `<path>/collections/<slug>/` folder for every configured collection, giving you a place to drop artwork.",
+          "title": "Create Empty Folders",
+          "type": "boolean"
+        },
+        "delete_old_empty_folders": {
+          "default": false,
+          "description": "Delete *empty* `<path>/collections/<slug>/` folders whose collection is no longer configured. A folder containing any file is never removed.",
+          "title": "Delete Old Empty Folders",
+          "type": "boolean"
+        }
+      },
+      "title": "ArtworkRepo",
+      "type": "object"
+    },
+    "BuilderBlock": {
+      "additionalProperties": false,
+      "description": "One ordered block of sources.\n\nA block is resolved in its natural order (a sole single curated list keeps its\norder; anything else is release-date sorted). Blocks are concatenated in order via\n``CollectionDef.append`` so the user can control cross-block ordering.",
+      "properties": {
+        "match": {
+          "default": "any",
+          "description": "How the block's keys combine: any (union, default) | all (intersection -- a title must match EVERY key).",
+          "enum": [
+            "any",
+            "all"
+          ],
+          "title": "Match",
+          "type": "string"
+        },
+        "tmdb_collection": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB collection id(s); members are merged and sorted chronologically.",
+          "title": "Tmdb Collection"
+        },
+        "tmdb_movie": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Individual TMDB movie id(s).",
+          "title": "Tmdb Movie"
+        },
+        "tmdb_title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Title(s) resolved via search, e.g. \"A Film Title\" or \"A Remade Title (1999)\" to disambiguate by year. Numeric titles may be unquoted.",
+          "title": "Tmdb Title"
+        },
+        "tmdb_keyword": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB keyword id(s)/name(s), or {all|any|except: [...]}. A Discover query (bare list = OR), joined chronologically.",
+          "title": "Tmdb Keyword"
+        },
+        "tmdb_genre": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Genre id/name, a bare list (AND), or a {all|any|except: [...]} mapping. A Discover query, joined chronologically.",
+          "title": "Tmdb Genre"
+        },
+        "tmdb_actor": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB person id(s) or name(s); their acting credits.",
+          "title": "Tmdb Actor"
+        },
+        "tmdb_director": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB person id(s) or name(s); titles they directed.",
+          "title": "Tmdb Director"
+        },
+        "tmdb_writer": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB person id(s) or name(s); titles they wrote.",
+          "title": "Tmdb Writer"
+        },
+        "tmdb_producer": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB person id(s) or name(s); titles they produced.",
+          "title": "Tmdb Producer"
+        },
+        "tmdb_crew": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB person id(s) or name(s); all their crew credits.",
+          "title": "Tmdb Crew"
+        },
+        "tmdb_company": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB production company id(s) or name(s); joined chronologically.",
+          "title": "Tmdb Company"
+        },
+        "tmdb_popular": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's Popular chart.",
+          "title": "Tmdb Popular"
+        },
+        "tmdb_now_playing": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's Now Playing chart.",
+          "title": "Tmdb Now Playing"
+        },
+        "tmdb_top_rated": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's Top Rated chart.",
+          "title": "Tmdb Top Rated"
+        },
+        "tmdb_upcoming": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's Upcoming chart.",
+          "title": "Tmdb Upcoming"
+        },
+        "tmdb_trending_daily": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's daily Trending chart.",
+          "title": "Tmdb Trending Daily"
+        },
+        "tmdb_trending_weekly": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's weekly Trending chart.",
+          "title": "Tmdb Trending Weekly"
+        },
+        "tmdb_show": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Individual TMDB show (TV) id(s). The tv analogue of tmdb_movie.",
+          "title": "Tmdb Show"
+        },
+        "tmdb_network": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB TV network id(s), or {all|any|except: [...]}. The tv analogue of tmdb_company. Networks must be given by id (TMDB has no network name search).",
+          "title": "Tmdb Network"
+        },
+        "tmdb_on_the_air": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's TV On The Air chart (tv only).",
+          "title": "Tmdb On The Air"
+        },
+        "tmdb_airing_today": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's TV Airing Today chart (tv only).",
+          "title": "Tmdb Airing Today"
+        },
+        "tmdb_discover": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Raw TMDB Discover query (escape hatch); `limit` is honoured.",
+          "title": "Tmdb Discover"
+        },
+        "tmdb_list": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB list id(s), or {all|any|except: [...]} (intersection/union/subtract of lists); kept in curated order.",
+          "title": "Tmdb List"
+        },
+        "mdblist_list": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/MdblistFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "MDBList list URL(s)/ref(s), or {url|all|except, sort_by, limit}; curated.",
+          "title": "Mdblist List"
+        },
+        "mdblist_catalog": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MdblistCatalog"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "MDBList discover -- filter/sort by cross-source ratings (RT/Metacritic/...)."
+        },
+        "mdblist_official": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/MdblistOfficial"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "MDBList official playlist by slug (e.g. 'popular'), or {slug, sort_by, limit}.",
+          "title": "Mdblist Official"
+        },
+        "tvdb_show": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TVDB series id(s)/slug(s)/name(s) (tv only).",
+          "title": "Tvdb Show"
+        },
+        "tvdb_movie": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TVDB movie id(s)/slug(s)/name(s) (movie only); resolved to TMDB/IMDb ids.",
+          "title": "Tvdb Movie"
+        },
+        "tvdb_list": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A TVDB list id or slug; its items of the collection's media, curated order.",
+          "title": "Tvdb List"
+        },
+        "tvdb_discover": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Raw TVDB filter query (escape hatch: genre/company/country/lang/year/sort); `limit` is honoured. country+lang default to usa/eng.",
+          "title": "Tvdb Discover"
+        }
+      },
+      "title": "BuilderBlock",
+      "type": "object"
+    },
+    "CacheSettings": {
+      "additionalProperties": false,
+      "description": "Metadata-cache durations + on/off switch.\n\nFour intent-named knobs each govern a group of internal cache namespaces; the\nRadarr/Sonarr add-lookup caches are fixed internal constants, not exposed here.\nDurations are ``<int>d`` / ``<int>h`` (or ``0`` / ``off`` to bypass that\nbucket); minutes are rejected. The cache file path is not configured here --\nit derives from the config directory (see :class:`Secrets`).",
+      "properties": {
+        "enabled": {
+          "default": true,
+          "description": "Master switch for the metadata cache.",
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "record_cache_duration": {
+          "default": "30d",
+          "description": "Per-id details + name/id resolution (TMDB, TVDB). <int>d / <int>h, or 0/off to bypass.",
+          "title": "Record Cache Duration",
+          "type": "string"
+        },
+        "list_cache_duration": {
+          "default": "1d",
+          "description": "Membership of curated/dynamic lists (MDBList, TVDB, TMDB lists).",
+          "title": "List Cache Duration",
+          "type": "string"
+        },
+        "query_cache_duration": {
+          "default": "3d",
+          "description": "discover / genre / company / keyword / person queries.",
+          "title": "Query Cache Duration",
+          "type": "string"
+        },
+        "chart_cache_duration": {
+          "default": "1d",
+          "description": "popular / trending / time-windowed charts.",
+          "title": "Chart Cache Duration",
+          "type": "string"
+        }
+      },
+      "title": "CacheSettings",
+      "type": "object"
+    },
+    "CollectionDef": {
+      "additionalProperties": false,
+      "description": "A single collection definition.\n\nThe top-level builder keys form the first block; ``append`` adds further ordered\nblocks after it. Unknown keys are rejected so typos surface immediately.",
+      "properties": {
+        "match": {
+          "default": "any",
+          "description": "How the block's keys combine: any (union, default) | all (intersection -- a title must match EVERY key).",
+          "enum": [
+            "any",
+            "all"
+          ],
+          "title": "Match",
+          "type": "string"
+        },
+        "tmdb_collection": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB collection id(s); members are merged and sorted chronologically.",
+          "title": "Tmdb Collection"
+        },
+        "tmdb_movie": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Individual TMDB movie id(s).",
+          "title": "Tmdb Movie"
+        },
+        "tmdb_title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Title(s) resolved via search, e.g. \"A Film Title\" or \"A Remade Title (1999)\" to disambiguate by year. Numeric titles may be unquoted.",
+          "title": "Tmdb Title"
+        },
+        "tmdb_keyword": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB keyword id(s)/name(s), or {all|any|except: [...]}. A Discover query (bare list = OR), joined chronologically.",
+          "title": "Tmdb Keyword"
+        },
+        "tmdb_genre": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Genre id/name, a bare list (AND), or a {all|any|except: [...]} mapping. A Discover query, joined chronologically.",
+          "title": "Tmdb Genre"
+        },
+        "tmdb_actor": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB person id(s) or name(s); their acting credits.",
+          "title": "Tmdb Actor"
+        },
+        "tmdb_director": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB person id(s) or name(s); titles they directed.",
+          "title": "Tmdb Director"
+        },
+        "tmdb_writer": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB person id(s) or name(s); titles they wrote.",
+          "title": "Tmdb Writer"
+        },
+        "tmdb_producer": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB person id(s) or name(s); titles they produced.",
+          "title": "Tmdb Producer"
+        },
+        "tmdb_crew": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB person id(s) or name(s); all their crew credits.",
+          "title": "Tmdb Crew"
+        },
+        "tmdb_company": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB production company id(s) or name(s); joined chronologically.",
+          "title": "Tmdb Company"
+        },
+        "tmdb_popular": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's Popular chart.",
+          "title": "Tmdb Popular"
+        },
+        "tmdb_now_playing": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's Now Playing chart.",
+          "title": "Tmdb Now Playing"
+        },
+        "tmdb_top_rated": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's Top Rated chart.",
+          "title": "Tmdb Top Rated"
+        },
+        "tmdb_upcoming": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's Upcoming chart.",
+          "title": "Tmdb Upcoming"
+        },
+        "tmdb_trending_daily": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's daily Trending chart.",
+          "title": "Tmdb Trending Daily"
+        },
+        "tmdb_trending_weekly": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's weekly Trending chart.",
+          "title": "Tmdb Trending Weekly"
+        },
+        "tmdb_show": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Individual TMDB show (TV) id(s). The tv analogue of tmdb_movie.",
+          "title": "Tmdb Show"
+        },
+        "tmdb_network": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB TV network id(s), or {all|any|except: [...]}. The tv analogue of tmdb_company. Networks must be given by id (TMDB has no network name search).",
+          "title": "Tmdb Network"
+        },
+        "tmdb_on_the_air": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's TV On The Air chart (tv only).",
+          "title": "Tmdb On The Air"
+        },
+        "tmdb_airing_today": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Top N of TMDB's TV Airing Today chart (tv only).",
+          "title": "Tmdb Airing Today"
+        },
+        "tmdb_discover": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Raw TMDB Discover query (escape hatch); `limit` is honoured.",
+          "title": "Tmdb Discover"
+        },
+        "tmdb_list": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/SelectFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB list id(s), or {all|any|except: [...]} (intersection/union/subtract of lists); kept in curated order.",
+          "title": "Tmdb List"
+        },
+        "mdblist_list": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/MdblistFilter"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "MDBList list URL(s)/ref(s), or {url|all|except, sort_by, limit}; curated.",
+          "title": "Mdblist List"
+        },
+        "mdblist_catalog": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MdblistCatalog"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "MDBList discover -- filter/sort by cross-source ratings (RT/Metacritic/...)."
+        },
+        "mdblist_official": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/MdblistOfficial"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "MDBList official playlist by slug (e.g. 'popular'), or {slug, sort_by, limit}.",
+          "title": "Mdblist Official"
+        },
+        "tvdb_show": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TVDB series id(s)/slug(s)/name(s) (tv only).",
+          "title": "Tvdb Show"
+        },
+        "tvdb_movie": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TVDB movie id(s)/slug(s)/name(s) (movie only); resolved to TMDB/IMDb ids.",
+          "title": "Tvdb Movie"
+        },
+        "tvdb_list": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A TVDB list id or slug; its items of the collection's media, curated order.",
+          "title": "Tvdb List"
+        },
+        "tvdb_discover": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Raw TVDB filter query (escape hatch: genre/company/country/lang/year/sort); `limit` is honoured. country+lang default to usa/eng.",
+          "title": "Tvdb Discover"
+        },
+        "media": {
+          "description": "What this collection builds: movie (Radarr / Jellyfin movie libraries), tv (Sonarr / Jellyfin show libraries), or mixed (one BoxSet holding both, driving Radarr AND Sonarr). Selects the client(s), library type(s), and the movie-vs-TV dialect of shared builder keys -- in a mixed collection a shared key (genre, people, charts, mdblist, ...) produces BOTH movies and shows. Required.",
+          "enum": [
+            "movie",
+            "tv",
+            "mixed"
+          ],
+          "title": "Media",
+          "type": "string"
+        },
+        "append": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/BuilderBlock"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Further ordered blocks, each resolved independently and concatenated after the first block.",
+          "title": "Append"
+        },
+        "overview": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Overview text for the collection; overrides any source metadata.",
+          "title": "Overview"
+        },
+        "tmdb_overview": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB collection id whose overview is fetched at runtime and used as the collection overview -- for merges, where there is no sole source to auto-fill from. A literal `overview` overrides it.",
+          "title": "Tmdb Overview"
+        },
+        "sort_title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Sort title used to position the collection itself.",
+          "title": "Sort Title"
+        },
+        "primary_art_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Primary (poster) image URL; Jellyfin downloads it. Overrides the artwork repo and the auto-sourced TMDB poster. Exclusive with `primary_art_file`.",
+          "title": "Primary Art Url"
+        },
+        "primary_art_file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path to a local Primary (poster) image; its bytes are uploaded. Exclusive with `primary_art_url`.",
+          "title": "Primary Art File"
+        },
+        "thumb_art_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Thumb (landscape title card) image URL; Jellyfin downloads it. Overrides the artwork repo and the auto-sourced TMDB titled backdrop. Exclusive with `thumb_art_file`.",
+          "title": "Thumb Art Url"
+        },
+        "thumb_art_file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path to a local Thumb (landscape title card) image; its bytes are uploaded. Exclusive with `thumb_art_url`.",
+          "title": "Thumb Art File"
+        },
+        "backdrop_art_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Backdrop (fanart) image URL; Jellyfin downloads it. Overrides the artwork repo and the auto-sourced TMDB textless backdrop. Exclusive with `backdrop_art_file`.",
+          "title": "Backdrop Art Url"
+        },
+        "backdrop_art_file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path to a local Backdrop (fanart) image; its bytes are uploaded. Exclusive with `backdrop_art_url`.",
+          "title": "Backdrop Art File"
+        },
+        "sync_mode": {
+          "anyOf": [
+            {
+              "enum": [
+                "append",
+                "sync"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Per-collection override of the global sync_mode.",
+          "title": "Sync Mode"
+        },
+        "hide_year": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Override the global hide_year for this collection (empty its year + release-date fields). Unset = use the global setting.",
+          "title": "Hide Year"
+        },
+        "run_schedule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Per-collection run-schedule override (level 3, the most specific): a name in `settings.run_schedules`, an inline cron, or 'none'/'disabled' to never schedule it. Unset inherits `settings.jobs.collections`, then `settings.run_schedule`. Only the daemon `serve` schedules; this collection still runs on demand via webhook or manual `run`.",
+          "title": "Run Schedule"
+        },
+        "order": {
+          "anyOf": [
+            {
+              "enum": [
+                "source",
+                "sort_name",
+                "release_date"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Display order: source (as built, DisplayOrder=Default) | sort_name | release_date. When unset, defaults to release_date if the collection is release-sorted at build (single/merged collections, query builders) or source for a sole curated list (charts, tmdb_list, mdblist_list).",
+          "title": "Order"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Cap each broad query builder (genre/keyword/company/people/discover) to this many titles, most-popular-first. Defaults to 100; set 0 for unlimited.",
+          "title": "Limit"
+        },
+        "libraries": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Jellyfin libraries (by name) to match within; omit for all libraries of the collection's media type (movie or tv).",
+          "title": "Libraries"
+        },
+        "section": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name of a top-level `sections` entry. Gives the collection an auto-generated sort title so sections group together, in the order declared.",
+          "title": "Section"
+        },
+        "radarr": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RadarrOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Radarr sync + identity-tag options. Set `enable: true` to opt the collection into Radarr management (the block is inert otherwise); other fields inherit the global `settings.radarr` defaults. `movie` or `mixed` collections only."
+        },
+        "sonarr": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SonarrOptions"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Sonarr sync + identity-tag options (the TV analogue of `radarr:`). Set `enable: true` to opt the collection into Sonarr management (inert otherwise); other fields inherit the global `settings.sonarr` defaults. `tv` or `mixed` only."
+        }
+      },
+      "required": [
+        "media"
+      ],
+      "title": "CollectionDef",
+      "type": "object"
+    },
+    "GlobalSettings": {
+      "additionalProperties": false,
+      "description": "Top-level settings applied to all collections unless overridden.",
+      "properties": {
+        "sync_mode": {
+          "default": "append",
+          "description": "Default sync mode: append = add only; sync = also remove items no longer in the source. Overridable per collection.",
+          "enum": [
+            "append",
+            "sync"
+          ],
+          "title": "Sync Mode",
+          "type": "string"
+        },
+        "language": {
+          "default": "en-US",
+          "description": "TMDB language tag for text metadata (titles, overviews, genre names): ISO 639-1, optionally with a region (e.g. en, en-US, en-GB, fr-FR, pt-BR). Affects TMDB text only -- not artwork selection, and not TVDB (always English today).",
+          "title": "Language",
+          "type": "string"
+        },
+        "region": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TMDB region (ISO 3166-1, e.g. US/GB) -- separate from `language`'s region suffix; it localises release dates on charts/discover only.",
+          "title": "Region"
+        },
+        "hide_year": {
+          "default": true,
+          "description": "Empty a collection's year + release-date fields (a single year on a whole collection is meaningless). Overridable per collection.",
+          "title": "Hide Year",
+          "type": "boolean"
+        },
+        "delete_unconfigured_collections": {
+          "default": false,
+          "description": "On a full run, delete Nalanda-managed collections (ones it previously created) that are no longer in the config. Never touches collections it didn't make.",
+          "title": "Delete Unconfigured Collections",
+          "type": "boolean"
+        },
+        "unlock_unconfigured_metadata": {
+          "default": false,
+          "description": "When a per-item metadata entry/field is removed from config, unlock it in Jellyfin (remove the field lock; clear a managed sort title) so a refresh can reclaim it. Default false: removed entries are left locked, like delete_unconfigured_collections.",
+          "title": "Unlock Unconfigured Metadata",
+          "type": "boolean"
+        },
+        "radarr": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RadarrDefaults"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Global Radarr sync + tagging defaults. Per-collection `radarr:` blocks override these. Omit if not using Radarr."
+        },
+        "sonarr": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SonarrDefaults"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Global Sonarr sync + tagging defaults (the TV analogue). Per-collection `sonarr:` blocks override these. Omit if not using Sonarr."
+        },
+        "webhook": {
+          "$ref": "#/$defs/WebhookSettings",
+          "description": "Inbound-request behaviour of the `nalanda serve` daemon (debounce/gating)."
+        },
+        "cache": {
+          "$ref": "#/$defs/CacheSettings",
+          "description": "Metadata-cache durations + on/off switch (TMDB/TVDB/MDBList)."
+        },
+        "run_schedules": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Optional named cron strings (e.g. {daily: '0 4 * * *'}), referenced by name from `run_schedule`, `jobs.*`, or a collection's `run_schedule:`. Purely for reuse -- a schedule reference may also be an inline cron string instead of a name.",
+          "title": "Run Schedules",
+          "type": "object"
+        },
+        "run_schedule": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Global default run schedule for every job (level 1 of the cascade): a name in `run_schedules`, an inline cron, or 'none'/'disabled' = off. Overridden per job-kind by `jobs.*` and per collection by a collection's `run_schedule:`. The daemon `serve` reads this; one-off `run` ignores it.",
+          "title": "Run Schedule"
+        },
+        "jobs": {
+          "$ref": "#/$defs/JobSchedules",
+          "description": "Per-job-kind default run schedules (level 2 of the cascade); override the global `run_schedule` for that kind."
+        }
+      },
+      "title": "GlobalSettings",
+      "type": "object"
+    },
+    "JobSchedules": {
+      "additionalProperties": false,
+      "description": "Per-job-kind default run schedules (level 2 of the run-schedule cascade).\n\nEach value is a schedule *reference*: a key in ``settings.run_schedules``, an\ninline cron string, or the sentinel ``none`` / ``disabled`` (opt out). Two job\nkinds are wired: ``collections`` (the collection build/reconcile job) and\n``metadata`` (the per-item metadata job). Unknown kinds are rejected so a\ntypo'd key surfaces immediately.",
+      "properties": {
+        "collections": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Default run schedule for the collection build/reconcile job. A name in `settings.run_schedules`, an inline cron, or 'none'/'disabled'. Overrides the global `settings.run_schedule`; a per-collection `run_schedule:` overrides this in turn.",
+          "title": "Collections"
+        },
+        "metadata": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Default run schedule for the per-item metadata job. A name in `settings.run_schedules`, an inline cron, or 'none'/'disabled'. Overrides the global `settings.run_schedule` for this job.",
+          "title": "Metadata"
+        }
+      },
+      "title": "JobSchedules",
+      "type": "object"
+    },
+    "MdblistCatalog": {
+      "additionalProperties": false,
+      "description": "MDBList's discover (`/catalog/movie` or `/catalog/show`) -- filter/sort by\ncross-source ratings.",
+      "properties": {
+        "genre": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Genre name(s).",
+          "title": "Genre"
+        },
+        "genre_mode": {
+          "default": "or",
+          "description": "Combine genres.",
+          "enum": [
+            "and",
+            "or"
+          ],
+          "title": "Genre Mode",
+          "type": "string"
+        },
+        "country": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CSV of ISO 3166-1 codes (max 10).",
+          "title": "Country"
+        },
+        "language": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "CSV of ISO 639-1 codes (max 10).",
+          "title": "Language"
+        },
+        "score_min": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Min MDBList score (0-100).",
+          "title": "Score Min"
+        },
+        "score_max": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Max MDBList score (0-100).",
+          "title": "Score Max"
+        },
+        "released_from": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Earliest release (YYYY-MM-DD).",
+          "title": "Released From"
+        },
+        "released_to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Latest release (YYYY-MM-DD).",
+          "title": "Released To"
+        },
+        "year_min": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Year Min"
+        },
+        "year_max": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Year Max"
+        },
+        "runtime_min": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Runtime Min"
+        },
+        "runtime_max": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Runtime Max"
+        },
+        "sort": {
+          "anyOf": [
+            {
+              "enum": [
+                "imdbpopular",
+                "imdbrating",
+                "imdbvotes",
+                "letterrating",
+                "metacritic",
+                "released",
+                "releasedigital",
+                "rtaudience",
+                "rtomatoes",
+                "score",
+                "score_average",
+                "title",
+                "tmdbpopular"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Sort field (e.g. rtomatoes).",
+          "title": "Sort"
+        },
+        "sort_order": {
+          "default": "desc",
+          "description": "Sort direction.",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "title": "Sort Order",
+          "type": "string"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Max titles (default: collection limit).",
+          "title": "Limit"
+        }
+      },
+      "title": "MdblistCatalog",
+      "type": "object"
+    },
+    "MdblistFilter": {
+      "additionalProperties": false,
+      "description": "One or more MDBList lists, combined and (optionally) sorted/capped.\n\n``url`` is one or more list refs (union); ``all`` intersects lists;\n``except`` subtracts a list's titles. ``sort_by`` is ``\"<field>.<asc|desc>\"`` (e.g.\n``imdbrating.desc``); ``limit`` caps each fetch.",
+      "properties": {
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "List URL(s)/ref(s); union.",
+          "title": "Url"
+        },
+        "all": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Only titles in ALL these lists.",
+          "title": "All"
+        },
+        "except": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Subtract these lists' titles.",
+          "title": "Except"
+        },
+        "sort_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "MDBList sort, e.g. \"imdbrating.desc\" / \"rank.asc\".",
+          "title": "Sort By"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Max titles to take from each list.",
+          "title": "Limit"
+        }
+      },
+      "title": "MdblistFilter",
+      "type": "object"
+    },
+    "MdblistOfficial": {
+      "additionalProperties": false,
+      "description": "An MDBList official playlist (by slug).",
+      "properties": {
+        "slug": {
+          "description": "Official playlist slug, e.g. 'popular'.",
+          "title": "Slug",
+          "type": "string"
+        },
+        "sort_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "MDBList sort, e.g. \"score.desc\".",
+          "title": "Sort By"
+        },
+        "limit": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Limit"
+        }
+      },
+      "required": [
+        "slug"
+      ],
+      "title": "MdblistOfficial",
+      "type": "object"
+    },
+    "MetadataConfig": {
+      "additionalProperties": false,
+      "description": "Per-item metadata overrides, grouped by media so id-to-library routing is\nunambiguous.",
+      "properties": {
+        "movies": {
+          "description": "Per-movie metadata overrides, normally keyed by tmdb or imdb id (any one provider id is accepted).",
+          "items": {
+            "$ref": "#/$defs/MetadataEntry"
+          },
+          "title": "Movies",
+          "type": "array"
+        },
+        "shows": {
+          "description": "Per-series metadata overrides, normally keyed by tvdb, or tmdb/imdb (any one provider id is accepted).",
+          "items": {
+            "$ref": "#/$defs/MetadataEntry"
+          },
+          "title": "Shows",
+          "type": "array"
+        }
+      },
+      "title": "MetadataConfig",
+      "type": "object"
+    },
+    "MetadataEntry": {
+      "additionalProperties": false,
+      "description": "One item's metadata overrides, keyed by a single provider id.\n\nExactly one of ``tmdb`` / ``imdb`` / ``tvdb`` identifies the item (movies are\nnormally tmdb/imdb, shows tvdb/tmdb/imdb); at least one override field must be\nset. Each declared field is written to Jellyfin; the lockable fields\n(parental_rating, title, overview) are locked so a metadata refresh cannot\noverwrite them, and sort_title persists via ForcedSortName (re-asserted each run).",
+      "properties": {
+        "tmdb": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tmdb"
+        },
+        "imdb": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Imdb"
+        },
+        "tvdb": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tvdb"
+        },
+        "parental_rating": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Jellyfin Parental Rating (OfficialRating), e.g. GB-15 or 15. Written and locked. A bare number (a UK/AU rating) is accepted and stored as a string.",
+          "title": "Parental Rating"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Item title (Name). Written and locked.",
+          "title": "Title"
+        },
+        "overview": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Item overview. Written and locked.",
+          "title": "Overview"
+        },
+        "sort_title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Sort Title (ForcedSortName). Sticky across normal refreshes; Nalanda re-asserts it each run, but a replace-all-metadata refresh in Jellyfin can still clear it.",
+          "title": "Sort Title"
+        }
+      },
+      "title": "MetadataEntry",
+      "type": "object"
+    },
+    "RadarrDefaults": {
+      "additionalProperties": false,
+      "description": "Global Radarr sync + tagging defaults.\n\nPer-collection ``radarr:`` blocks override any of these. All four ``add_*``/\n``*_existing`` toggles default **false**: with everything off, a\nRadarr-managed collection is a no-op until you opt into adding and/or tagging.",
+      "properties": {
+        "add_missing": {
+          "default": false,
+          "description": "Add collection movies that aren't yet in Radarr.",
+          "title": "Add Missing",
+          "type": "boolean"
+        },
+        "add_existing": {
+          "default": false,
+          "description": "Apply the identity tag to collection movies already in Radarr (the 'if-exists' half of tagging; decoupled from adding).",
+          "title": "Add Existing",
+          "type": "boolean"
+        },
+        "upgrade_existing": {
+          "default": false,
+          "description": "Reset existing members' quality profile to the collection's (diff-first).",
+          "title": "Upgrade Existing",
+          "type": "boolean"
+        },
+        "monitor_existing": {
+          "default": false,
+          "description": "Reset existing members' monitored flag to `monitored`.",
+          "title": "Monitor Existing",
+          "type": "boolean"
+        },
+        "monitored": {
+          "default": true,
+          "description": "Monitor newly added movies.",
+          "title": "Monitored",
+          "type": "boolean"
+        },
+        "search": {
+          "default": false,
+          "description": "Trigger a Radarr search when adding a movie (fully decoupled from tagging).",
+          "title": "Search",
+          "type": "boolean"
+        },
+        "minimum_availability": {
+          "default": "released",
+          "description": "Radarr minimum availability for added movies.",
+          "enum": [
+            "announced",
+            "in_cinemas",
+            "released"
+          ],
+          "title": "Minimum Availability",
+          "type": "string"
+        },
+        "quality_profile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Quality profile name or id for added (and upgraded) movies.",
+          "title": "Quality Profile"
+        },
+        "root_folder": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Root folder path for added movies.",
+          "title": "Root Folder"
+        },
+        "tag_prefix": {
+          "default": "nalanda-",
+          "description": "Namespace prefix for Nalanda identity tags. Nalanda only ever adds/removes tags under this prefix, never touching manual or other-tool tags.",
+          "title": "Tag Prefix",
+          "type": "string"
+        },
+        "stale_tags": {
+          "default": "mark",
+          "description": "What happens to a movie's identity tag when it leaves a collection: delete it, mark it (swap to <tag><stale_suffix>), or keep it.",
+          "enum": [
+            "delete",
+            "mark",
+            "keep"
+          ],
+          "title": "Stale Tags",
+          "type": "string"
+        },
+        "stale_suffix": {
+          "default": "-stale",
+          "description": "Suffix appended to the identity tag for the `mark` policy.",
+          "title": "Stale Suffix",
+          "type": "string"
+        }
+      },
+      "title": "RadarrDefaults",
+      "type": "object"
+    },
+    "RadarrOptions": {
+      "additionalProperties": false,
+      "description": "Per-collection Radarr options (field meanings: see :class:`RadarrDefaults`).",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Opt this collection into *arr management. Defaults to false, so a block with `enable` unset or false is inert (no add/tag/search) -- doubling as an off switch.",
+          "title": "Enable",
+          "type": "boolean"
+        },
+        "add_missing": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Add Missing"
+        },
+        "add_existing": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Add Existing"
+        },
+        "upgrade_existing": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upgrade Existing"
+        },
+        "monitor_existing": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Monitor Existing"
+        },
+        "search": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Search"
+        },
+        "quality_profile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quality Profile"
+        },
+        "root_folder": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Root Folder"
+        },
+        "tag_prefix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tag Prefix"
+        },
+        "stale_tags": {
+          "anyOf": [
+            {
+              "enum": [
+                "delete",
+                "mark",
+                "keep"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stale Tags"
+        },
+        "stale_suffix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stale Suffix"
+        },
+        "tag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Override the identity tag's auto-slug (final label = tag_prefix + this). Defaults to a slug of the collection name.",
+          "title": "Tag"
+        },
+        "monitored": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Monitored"
+        },
+        "minimum_availability": {
+          "anyOf": [
+            {
+              "enum": [
+                "announced",
+                "in_cinemas",
+                "released"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Minimum Availability"
+        }
+      },
+      "title": "RadarrOptions",
+      "type": "object"
+    },
+    "SelectFilter": {
+      "additionalProperties": false,
+      "description": "An include/exclude operator mapping, shared by genre, people and company keys.\n\n``all`` (AND) / ``any`` (OR) select values to INCLUDE; they are mutually exclusive.\n``except`` lists values to EXCLUDE -- a filter that drops any title matching one of\nthem, and may stand alone (pruning the rest of the block) or accompany ``all`` /\n``any``. Entries are ids or names (the two may be mixed). At least one must be set.\n\nSemantics differ by attribute: genres combine server-side (with_genres) and\nexcept is an attribute filter; people/company combine as client-side set algebra\n(all=intersection, any=union, except=subtract that source's titles).",
+      "properties": {
+        "all": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Include titles matching ALL of these (AND / intersection).",
+          "title": "All"
+        },
+        "any": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Include titles matching ANY of these (OR / union).",
+          "title": "Any"
+        },
+        "except": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Exclude any title matching these (a filter, not a source).",
+          "title": "Except"
+        }
+      },
+      "title": "SelectFilter",
+      "type": "object"
+    },
+    "SonarrDefaults": {
+      "additionalProperties": false,
+      "description": "Global Sonarr sync + tagging defaults (the TV analogue of RadarrDefaults).\n\nPer-collection ``sonarr:`` blocks override any of these. The\n``add_*``/``*_existing`` toggles default **false**, so even an enabled\ncollection adds/tags nothing until you opt in.",
+      "properties": {
+        "add_missing": {
+          "default": false,
+          "description": "Add collection shows not yet in Sonarr.",
+          "title": "Add Missing",
+          "type": "boolean"
+        },
+        "add_existing": {
+          "default": false,
+          "description": "Apply the identity tag to shows already in Sonarr.",
+          "title": "Add Existing",
+          "type": "boolean"
+        },
+        "upgrade_existing": {
+          "default": false,
+          "description": "Reset existing members' quality profile to the collection's.",
+          "title": "Upgrade Existing",
+          "type": "boolean"
+        },
+        "monitor_existing": {
+          "default": false,
+          "description": "Reconcile existing members' `monitored` flag and season monitoring to `monitor` each run (season sync via Sonarr's seasonpass).",
+          "title": "Monitor Existing",
+          "type": "boolean"
+        },
+        "monitored": {
+          "default": true,
+          "description": "Series-level monitored flag for added shows.",
+          "title": "Monitored",
+          "type": "boolean"
+        },
+        "monitor": {
+          "default": "all",
+          "description": "Episode/season monitoring strategy for added shows (and, with monitor_existing, reconciled): all | future | missing | existing | pilot | first_season | latest_season | none.",
+          "enum": [
+            "all",
+            "future",
+            "missing",
+            "existing",
+            "pilot",
+            "first_season",
+            "latest_season",
+            "none"
+          ],
+          "title": "Monitor",
+          "type": "string"
+        },
+        "search": {
+          "default": false,
+          "description": "Search for missing episodes when adding a show (decoupled from tagging).",
+          "title": "Search",
+          "type": "boolean"
+        },
+        "cutoff_search": {
+          "default": false,
+          "description": "Also search for cutoff-unmet episodes when adding.",
+          "title": "Cutoff Search",
+          "type": "boolean"
+        },
+        "series_type": {
+          "default": "standard",
+          "description": "Sonarr series type (episode numbering scheme).",
+          "enum": [
+            "standard",
+            "daily",
+            "anime"
+          ],
+          "title": "Series Type",
+          "type": "string"
+        },
+        "season_folder": {
+          "default": true,
+          "description": "Organise episodes into season folders.",
+          "title": "Season Folder",
+          "type": "boolean"
+        },
+        "quality_profile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Quality profile name or id for added (and upgraded) shows.",
+          "title": "Quality Profile"
+        },
+        "language_profile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Language profile name or id (Sonarr v3 only; ignored on v4 which dropped them).",
+          "title": "Language Profile"
+        },
+        "root_folder": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Root folder path for added shows.",
+          "title": "Root Folder"
+        },
+        "tag_prefix": {
+          "default": "nalanda-",
+          "description": "Namespace prefix for Nalanda identity tags; Nalanda only ever touches this.",
+          "title": "Tag Prefix",
+          "type": "string"
+        },
+        "stale_tags": {
+          "default": "mark",
+          "description": "What happens to a show's identity tag when it leaves a collection: delete | mark (swap to <tag><stale_suffix>) | keep.",
+          "enum": [
+            "delete",
+            "mark",
+            "keep"
+          ],
+          "title": "Stale Tags",
+          "type": "string"
+        },
+        "stale_suffix": {
+          "default": "-stale",
+          "description": "Suffix appended to the identity tag for the `mark` policy.",
+          "title": "Stale Suffix",
+          "type": "string"
+        }
+      },
+      "title": "SonarrDefaults",
+      "type": "object"
+    },
+    "SonarrOptions": {
+      "additionalProperties": false,
+      "description": "Per-collection Sonarr options (field meanings: see :class:`SonarrDefaults`).",
+      "properties": {
+        "enable": {
+          "default": false,
+          "description": "Opt this collection into *arr management. Defaults to false, so a block with `enable` unset or false is inert (no add/tag/search) -- doubling as an off switch.",
+          "title": "Enable",
+          "type": "boolean"
+        },
+        "add_missing": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Add Missing"
+        },
+        "add_existing": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Add Existing"
+        },
+        "upgrade_existing": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upgrade Existing"
+        },
+        "monitor_existing": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Monitor Existing"
+        },
+        "search": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Search"
+        },
+        "quality_profile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quality Profile"
+        },
+        "root_folder": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Root Folder"
+        },
+        "tag_prefix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tag Prefix"
+        },
+        "stale_tags": {
+          "anyOf": [
+            {
+              "enum": [
+                "delete",
+                "mark",
+                "keep"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stale Tags"
+        },
+        "stale_suffix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stale Suffix"
+        },
+        "tag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Override the identity tag's auto-slug (final label = tag_prefix + this). Defaults to a slug of the collection name.",
+          "title": "Tag"
+        },
+        "monitored": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Monitored"
+        },
+        "monitor": {
+          "anyOf": [
+            {
+              "enum": [
+                "all",
+                "future",
+                "missing",
+                "existing",
+                "pilot",
+                "first_season",
+                "latest_season",
+                "none"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Monitor"
+        },
+        "cutoff_search": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cutoff Search"
+        },
+        "series_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "standard",
+                "daily",
+                "anime"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Series Type"
+        },
+        "season_folder": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Season Folder"
+        },
+        "language_profile": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Language Profile"
+        }
+      },
+      "title": "SonarrOptions",
+      "type": "object"
+    },
+    "WebhookSettings": {
+      "additionalProperties": false,
+      "description": "Behaviour of the ``nalanda serve`` webhook daemon (coalescing + gating of\ninbound requests).\n\nTime-driven scheduling lives in ``settings.run_schedules`` /\n``settings.run_schedule`` / ``settings.jobs``, not here -- a cron is not a\nwebhook concern. The bind address/port are *deployment* knobs, not behaviour,\nso they live in the environment / ``.env`` (``NALANDA_HOST`` /\n``NALANDA_PORT``; see :class:`Secrets`), not here. The state/cache file paths\nderive from the config dir.",
+      "properties": {
+        "debounce_seconds": {
+          "default": 300,
+          "description": "Coalesce a burst of triggers into one run; the window resets on each new trigger and the run fires once it's been quiet this long.",
+          "title": "Debounce Seconds",
+          "type": "integer"
+        },
+        "max_wait_seconds": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional cap on total debounce wait, so a sustained burst can't postpone the run indefinitely.",
+          "title": "Max Wait Seconds"
+        },
+        "allow_full_run": {
+          "default": false,
+          "description": "Permit POST /run to trigger a full run. Off -> /run returns 403; /trigger is always scoped and never runs everything.",
+          "title": "Allow Full Run",
+          "type": "boolean"
+        }
+      },
+      "title": "WebhookSettings",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The parsed ``config.yml``.",
+  "properties": {
+    "settings": {
+      "$ref": "#/$defs/GlobalSettings"
+    },
+    "sections": {
+      "description": "Ordered section names. A collection's `section` gives it a sort title prefixed by the section's position here, so sections group together in this order in the Jellyfin library view.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Sections",
+      "type": "array"
+    },
+    "collections": {
+      "additionalProperties": {
+        "$ref": "#/$defs/CollectionDef"
+      },
+      "title": "Collections",
+      "type": "object"
+    },
+    "artwork_repo": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ArtworkRepo"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Optional local artwork repository: per-collection images on disk, found by slugified name under `<path>/collections/`."
+    },
+    "metadata": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MetadataConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Per-item metadata overrides written and locked into Jellyfin (parental_rating, title, overview, sort_title), grouped by media."
+    }
+  },
+  "title": "Nalanda configuration",
+  "type": "object"
+}

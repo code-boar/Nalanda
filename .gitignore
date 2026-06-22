@@ -1,0 +1,38 @@
+# Virtual environment
+.venv/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Secrets and local config (examples are tracked, real ones are not)
+.env
+config.yml
+config.yaml
+
+# Runtime state, cache, and run-locks (state/cache/metadata-state + *.lock)
+.nalanda-*
+
+# Claude Code local settings (no shared Claude artifacts in this repo)
+.claude/
+
+# Logs
+*.log
+
+# Reference / local-only material (not part of the package)
+API_docs/
+artwork/
+docs/
+CLAUDE.md
+
+# Editors
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

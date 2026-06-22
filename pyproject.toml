@@ -1,0 +1,48 @@
+[project]
+name = "nalanda"
+version = "0.1.0"
+description = "A simplified collection and metadata manager for Jellyfin, inspired by Kometa"
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+requires-python = ">=3.14"
+dependencies = [
+    "croniter>=6.2.2",
+    "filelock>=3.29.1",
+    "langcodes>=3.5.1",
+    "niquests>=3.12",
+    "pydantic>=2.11",
+    "pydantic-settings>=2.7",
+    "pyyaml>=6.0.2",
+    "rich>=13.9",
+]
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.39.6",
+    "pytest>=8.3",
+    "ruff>=0.15.16",
+]
+
+# No [build-system]: Nalanda is an application, not a distributable package,
+# so uv manages it as a non-packaged project (dependencies only).
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+include = ["nalanda/**/*.py", "scripts/**/*.py", "tests/**/*.py"]
+
+[tool.ruff.lint]
+# E501 = line length (88); F = pyflakes (unused imports/names); I = import sorting; UP = pyupgrade.
+select = ["E501", "F", "I", "UP"]
+
+[tool.basedpyright]
+# "standard" (pyright's default) rather than basedpyright's stricter "recommended",
+# which floods on reportUnknown*/reportAny for the dynamic API-response dicts we parse.
+# Real correctness categories (optional access, bad assignments) stay as errors.
+include = ["nalanda"]
+typeCheckingMode = "standard"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=./config.schema.json
+
+# Nalanda starter config -- created automatically on first run.
+#
+# It is intentionally empty: Nalanda starts and idles until you define collections here and
+# fill in your secrets in the sibling .env file, then restart.
+#
+# The full annotated reference (every option, many example collections) is config.example.yml
+# in the Nalanda repo, and the configuration reference in the README.
+#
+# A minimal collection looks like:
+#
+#   collections:
+#     "A Movie Franchise":
+#       media: movie
+#       tmdb_collection: 1234   # a TMDB collection id
+#
+# Global settings (sync mode, language, run schedules, Radarr/Sonarr defaults, ...) go under a
+# top-level `settings:` block -- see the README for the full list.
+
+collections: {}
