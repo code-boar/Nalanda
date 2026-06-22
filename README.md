@@ -61,6 +61,10 @@ Nalanda needs two files: `.env` for secrets and connection details (gitignored),
 
 ### Docker
 
+Images are published to the GitHub Container Registry at `ghcr.io/code-boar/nalanda`.
+`latest` tracks the newest release; each release is also tagged `X.Y.Z` (plus `X.Y` and
+`X`), so pin a version for reproducible deploys.
+
 The image is rootless: it runs as a baked non-root user (uid/gid `1000`), with no
 privilege-dropping entrypoint. Everything Nalanda persists lives in one mounted directory,
 `/config` (holding `config.yml`, the state file, and the co-located `.env`), so the rest of the
