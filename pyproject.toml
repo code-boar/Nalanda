@@ -1,6 +1,6 @@
 [project]
 name = "nalanda"
-version = "0.1.0"
+version = "0.1.1"
 description = "A simplified collection and metadata manager for Jellyfin, inspired by Kometa"
 readme = "README.md"
 license = "AGPL-3.0-or-later"

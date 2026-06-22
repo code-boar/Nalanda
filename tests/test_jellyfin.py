@@ -21,6 +21,33 @@ def test_client_sets_authorization_header():
     assert client.session.headers.get("Authorization") == 'MediaBrowser Token="SECRET"'
 
 
+def test_update_item_strips_trickplay(monkeypatch):
+    # Jellyfin serializes `Trickplay` on GET but 500s deserializing it back on
+    # POST /Items/{id}, so update_item must drop it from the echoed DTO.
+    client = JellyfinClient("http://host:8096", "SECRET")
+    monkeypatch.setattr(
+        client,
+        "get_item",
+        lambda item_id: {
+            "Id": item_id,
+            "Name": "Example",
+            "OfficialRating": "PG",
+            "Trickplay": {"640": {"0": {"Width": 640}}},
+        },
+    )
+    sent: dict = {}
+
+    def fake_post(path, json=None, **kwargs):
+        sent["path"] = path
+        sent["json"] = json
+
+    monkeypatch.setattr(client, "post", fake_post)
+    client.update_item("itemid", {"OfficialRating": "15"})
+    assert sent["path"] == "Items/itemid"
+    assert "Trickplay" not in sent["json"]  # the offending field is gone
+    assert sent["json"]["OfficialRating"] == "15"  # the change is still applied
+
+
 def test_library_from_jellyfin():
     lib = JellyfinLibrary.from_jellyfin(
         {"Name": "Movies", "CollectionType": "movies", "ItemId": "abc123"}
