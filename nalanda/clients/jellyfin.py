@@ -237,6 +237,12 @@ class JellyfinClient(BaseClient):
         """Read-modify-write an item's metadata (e.g. set DisplayOrder)."""
         dto = self.get_item(item_id)
         dto.update(changes)
+        # Jellyfin serializes some computed fields it cannot deserialize back through
+        # POST /Items/{id}: `Trickplay` (-> TrickplayInfoDto, whose constructor params
+        # don't round-trip) makes the whole request 500 for any item that has trickplay
+        # data. Drop it before echoing the DTO back -- it's a read-only projection, so
+        # this doesn't touch the generated thumbnails, and it's a no-op when absent.
+        dto.pop("Trickplay", None)
         self.post(f"Items/{item_id}", json=dto)
 
     def refresh_item(

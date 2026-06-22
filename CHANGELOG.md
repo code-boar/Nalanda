@@ -5,6 +5,16 @@ All notable changes to Nalanda are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-06-23
+
+### Fixed
+
+- Per-item metadata writes (`run metadata`) returned HTTP 500 from Jellyfin for any item
+  with trickplay data. The read-modify-write echoed the full item DTO back to
+  `POST /Items/{id}`, including the `Trickplay` field, which Jellyfin serializes but cannot
+  deserialize (`TrickplayInfoDto`'s constructor parameters don't round-trip). The field is
+  now stripped before the update; items without trickplay data were unaffected.
+
 ## [0.1.0] - 2026-06-22
 
 _Initial release. There are no prior versions, so the list below is the feature set delivered in
