@@ -160,7 +160,9 @@ class BaseClient:
         )
         self._session.headers.update({"Accept": "application/json"})
         if headers:
-            self._session.headers.update(headers)
+            # .items() yields an Iterable[tuple[str, str]]; HTTPHeaderDict.update no
+            # longer accepts a plain dict[str, str] under its stricter stubs.
+            self._session.headers.update(headers.items())
 
     @property
     def session(self) -> niquests.Session:
