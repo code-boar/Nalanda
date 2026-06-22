@@ -10,6 +10,17 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+    # Doc/asset-only changes aren't in the image, so skip the edge rebuild they'd otherwise
+    # trigger: a new commit SHA changes the image labels (and thus the digest), causing a
+    # needless re-pull for anyone pinned to :edge. Not applied to tag pushes -- a tag creates
+    # a new ref, which GitHub never path-filters, so releases always build. The pull_request
+    # trigger below stays unfiltered so the required `docker` check runs on every PR.
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "images/**"
+      - "docker/compose.example.yml"
+      - "LICENSE"
   pull_request:
     branches: [main]
 
