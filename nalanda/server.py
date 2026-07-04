@@ -46,6 +46,17 @@ TOKEN_HEADER = "X-Nalanda-Token"
 MAX_BODY = 1_048_576  # 1 MiB cap on request bodies
 ALL = "ALL"  # scope sentinel for a full run
 
+# C0 control chars + DEL, deleted from any attacker-influenced value before it is
+# interpolated into a log line -- so a crafted request can't forge log entries or
+# smuggle terminal escape sequences. The explicit CR/LF replace is the canonical
+# log-injection sanitizer; translate() drops the rest.
+_LOG_CTRL = {i: None for i in range(0x20)} | {0x7F: None}
+
+
+def _log_safe(value: object) -> str:
+    """Render ``value`` for a single-line log with control characters removed."""
+    return str(value).replace("\r", "").replace("\n", "").translate(_LOG_CTRL)
+
 
 def resolve_scope(
     body: dict[str, Any],
@@ -276,15 +287,18 @@ class _Handler(BaseHTTPRequestHandler):
         if not ctx.secret:
             log.warning(
                 "%s %s -> 503 (webhook disabled: no WEBHOOK_SECRET set) from %s",
-                self.command,
-                self.path,
+                _log_safe(self.command),
+                _log_safe(self.path),
                 src,
             )
             self._send(503, {"error": "webhook disabled"})
             return
         if not hmac.compare_digest(self.headers.get(TOKEN_HEADER, ""), ctx.secret):
             log.warning(
-                "%s %s -> 401 (bad token) from %s", self.command, self.path, src
+                "%s %s -> 401 (bad token) from %s",
+                _log_safe(self.command),
+                _log_safe(self.path),
+                src,
             )
             self._send(401, {"error": "unauthorized"})
             return
@@ -329,7 +343,12 @@ class _Handler(BaseHTTPRequestHandler):
             self._send(204, None)
             return
         accepted, status = ctx.coordinator.submit("collections", names, gated=True)
-        log.info("POST /trigger from %s -> %d (scope %s)", src, status, sorted(names))
+        log.info(
+            "POST /trigger from %s -> %d (scope %s)",
+            src,
+            status,
+            sorted(_log_safe(n) for n in names),
+        )
         self._send(status, {"status": "accepted", "scope": sorted(names)})
 
 

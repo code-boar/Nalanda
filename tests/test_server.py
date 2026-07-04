@@ -380,6 +380,65 @@ def test_post_returns_503_when_no_secret():
     assert sent == [(503, {"error": "webhook disabled"})]
 
 
+def _drive_post_capturing_logs(h, monkeypatch):
+    """Run do_POST with the module logger replaced by a recorder; return the
+    rendered log lines."""
+    import nalanda.server as srv
+
+    lines: list[str] = []
+
+    class _Rec:
+        def warning(self, msg, *args):
+            lines.append(msg % args)
+
+        def info(self, msg, *args):
+            lines.append(msg % args)
+
+    h._send = lambda status, payload=None: None
+    monkeypatch.setattr(srv, "log", _Rec())
+    h.do_POST()
+    return lines
+
+
+def test_post_disabled_log_neutralizes_control_chars_in_method(monkeypatch):
+    """The disabled-webhook (503) log can't be forged via a crafted HTTP method."""
+    from types import SimpleNamespace
+
+    import nalanda.server as srv
+
+    h = srv._Handler.__new__(srv._Handler)
+    h.server = SimpleNamespace(_ctx=SimpleNamespace(secret=""))
+    h.client_address = ("1.2.3.4", 0)
+    h.command = "POST\r\nEVIL: forged\x1b[31m"
+    h.path = "/trigger"
+
+    lines = _drive_post_capturing_logs(h, monkeypatch)
+
+    assert len(lines) == 1
+    line = lines[0]
+    assert "\n" not in line and "\r" not in line and "\x1b" not in line
+    assert "EVIL: forged" in line  # de-fanged onto one line, not dropped wholesale
+
+
+def test_post_bad_token_log_neutralizes_control_chars_in_method(monkeypatch):
+    """The bad-token (401) log can't be forged via a crafted HTTP method."""
+    from types import SimpleNamespace
+
+    import nalanda.server as srv
+
+    h = srv._Handler.__new__(srv._Handler)
+    h.server = SimpleNamespace(_ctx=SimpleNamespace(secret="realsecret"))
+    h.client_address = ("1.2.3.4", 0)
+    h.command = "POST\nINJECTED"
+    h.path = "/trigger"
+    h.headers = {}  # no token header -> mismatch -> 401 branch
+
+    lines = _drive_post_capturing_logs(h, monkeypatch)
+
+    assert len(lines) == 1
+    assert "\n" not in lines[0] and "INJECTED" in lines[0]
+
+
 def test_coordinator_routes_metadata_kind():
     # The daemon relies on TriggerCoordinator dispatching a registered "metadata"
     # kind to its own runner (kinds run sequentially under one lock).
