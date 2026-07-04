@@ -5,6 +5,19 @@ All notable changes to Nalanda are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-07-04
+
+### Security
+
+- Hardened the webhook daemon's request logging against log injection (CWE-117).
+  The HTTP method, path, and resolved scope were interpolated into log lines
+  verbatim, so a crafted request could smuggle control characters to forge or
+  split log entries. These values are now stripped of control characters before
+  logging. The severity is low in practice, since the reachable inputs were
+  already constrained (the method is a single token, the path is one of two
+  literals, and scope names are validated against config), so this is
+  defense-in-depth.
+
 ## [0.1.1] - 2026-06-23
 
 ### Fixed
