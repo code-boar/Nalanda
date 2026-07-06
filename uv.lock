@@ -75,23 +75,23 @@ wheels = [
 
 [[package]]
 name = "croniter"
-version = "6.2.2"
+version = "6.2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-dateutil" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/df/de/5832661ed55107b8a09af3f0a2e71e0957226a59eb1dcf0a445cce6daf20/croniter-6.2.2.tar.gz", hash = "sha256:ba60832a5ec8e12e51b8691c3309a113d1cf6526bdf1a48150ce8ec7a532d0ab", size = 113762, upload-time = "2026-03-15T08:43:48.112Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/03/35/96ad0a71eb0b27ab4476a7ed23facd0713d82da9c911edc8af7f34a62d6a/croniter-6.2.3.tar.gz", hash = "sha256:fb129986ef7e2c44e3f4c9f503da83ad914d2afa48f40a43ee3dca4b5c41d476", size = 166174, upload-time = "2026-07-02T14:34:22.166Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d0/39/783980e78cb92c2d7bdb1fc7dbc86e94ccc6d58224d76a7f1f51b6c51e30/croniter-6.2.2-py3-none-any.whl", hash = "sha256:a5d17b1060974d36251ea4faf388233eca8acf0d09cbd92d35f4c4ac8f279960", size = 45422, upload-time = "2026-03-15T08:43:46.626Z" },
+    { url = "https://files.pythonhosted.org/packages/5c/dd/6466498a8b69754cffbd7237ce4c66446ca5ffcf53fb397d437666f056d2/croniter-6.2.3-py3-none-any.whl", hash = "sha256:137a97001b4d52fb71c10b750e303db79e6e42d40fff8ff77126102176c9f786", size = 46446, upload-time = "2026-07-02T14:34:20.889Z" },
 ]
 
 [[package]]
 name = "filelock"
-version = "3.29.4"
+version = "3.29.5"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e6/dc/be6cbe99670cd6e4ad387123647cb08e0c32975e223f82551e914c5568a6/filelock-3.29.4.tar.gz", hash = "sha256:10cdb3656fc44541cdf30652a93fb10ec6b05325620eb316bd26893e4201538a", size = 63028, upload-time = "2026-06-13T16:12:00.744Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e3/ee/29c668c50888588c432a702f7c2e8ee8a0c9e5286028d91f170308d6b2e9/filelock-3.29.5.tar.gz", hash = "sha256:6e6034c57a00a020e767f2614a5539863f056de7e7991d6d1473aef7ff73f156", size = 68927, upload-time = "2026-07-03T03:50:31.818Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/13/37/a065dc3bd6e49423a6532c642ca7378d3f467b1ef44c2800c937af7f9739/filelock-3.29.4-py3-none-any.whl", hash = "sha256:dac1648087d5115554850d113e7dd8c83ab2d38e3435dde2d4f163847e57b767", size = 42757, upload-time = "2026-06-13T16:11:59.582Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/e3/f1fae3647d170919c2cf2a898e77e7d1a4e5c7cae0aed7bb4bd3f5ebff6f/filelock-3.29.5-py3-none-any.whl", hash = "sha256:8af830889ba3a0ffcefbd6c7d2af8a54012058103771f2e10848222f476a1693", size = 45073, upload-time = "2026-07-03T03:50:30.445Z" },
 ]
 
 [[package]]
@@ -205,8 +205,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "croniter", specifier = ">=6.2.2" },
-    { name = "filelock", specifier = ">=3.29.4" },
+    { name = "croniter", specifier = ">=6.2.3" },
+    { name = "filelock", specifier = ">=3.29.5" },
     { name = "langcodes", specifier = ">=3.5.1" },
     { name = "niquests", specifier = ">=3.20.0" },
     { name = "pydantic", specifier = ">=2.11" },
